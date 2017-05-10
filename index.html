@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>拖拽</title>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="static/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <style type="text/css">
+    [v-cloak] {
+      display: none;
+    }
+
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif !important;
+    }
+
+    .source {
+      display: inline-block;
+      padding-bottom: 20px;
+    }
+
+    .source div {
+      margin: 2.5vw;
+      width: 20vw;
+      height: 20vw;
+      box-shadow: 0 0 2px #CCC;
+      float: left;
+      background: #f7f7f7;
+      color: #CCC;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .source .hig {
+      background: #CCC;
+    }
+
+    .move-box {
+      background-color: #2b2b2b;
+      width: 20vw;
+      height: 20vw;
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      color: #FFF;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 1s all;
+    }
+
+    .move {
+      transition: none;
+    }
+
+    .move-box .mask {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(255, 255, 255, 0.7);
+      z-index: 5;
+      opacity: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      transition: 1s all;
+    }
+
+    .move-box .mask div {
+      display: none;
+    }
+
+    .move-box.success .mask {
+      opacity: 100;
+    }
+
+    .move-box.error .mask {
+      opacity: 100;
+    }
+
+    .move-box.success .mask .success {
+      color: #43a047;
+      display: block;
+    }
+
+    .move-box.error .mask .error {
+      color: #ef5350;
+      display: block;
+    }
+
+    .check {
+      margin: 0 10px;
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-block;
+      overflow: hidden;
+      position: relative;
+      border-radius: 2px;
+      height: 36px;
+      line-height: 36px;
+      min-width: 88px;
+      -webkit-transition-duration: .3s;
+      transition-duration: .3s;
+      -webkit-transition-timing-function: cubic-bezier(.23, 1, .32, 1);
+      transition-timing-function: cubic-bezier(.23, 1, .32, 1);
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      text-decoration: none;
+      text-transform: uppercase;
+      border: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: #fff;
+      color: rgba(0, 0, 0, .87);
+      -webkit-box-flex: 0;
+      -webkit-flex-shrink: 0;
+      -ms-flex: 0 0 auto;
+      -ms-flex-negative: 0;
+      flex-shrink: 0;
+      margin: 0;
+      outline: 0;
+      padding: 0;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, .117647), 0 1px 4px rgba(0, 0, 0, .117647);
+      cursor: pointer;
+      -webkit-appearance: none;
+      background-color: #ff5722;
+      color: #FFF;
+      font-weight: 500;
+    }
+
+    .btn.rander {
+      cursor: none;
+      border-radius: 500px;
+      padding: 70px;
+      word-break: keep-all;
+      /* 不换行 */
+      white-space: nowrap;
+      /* 不换行 */
+      font-size: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 0;
+      height: 0;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .btn.rander>p {}
+
+    .btn.fullWidth {
+      width: 100%;
+    }
+
+    .showbox {
+      padding: 10px;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .time {
+      font-size: 5em;
+      text-align: center;
+      color: #2b2b2b;
+      text-shadow: 0 0 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" v-cloak>
+    <div class="showbox" v-if="status=='begin'">
+      <div class="btn rander" @click="status='showing'">
+        <p>
+          点击开始
+        </p>
+      </div>
+    </div>
+
+    <div v-if="status!='begin'">
+      <div class="source" ref="source">
+        <div v-for="(li,index) in anwsers" :data-index="index" ref="source-box">我在哪</div>
+      </div>
+      <div class="check" v-if="completed">
+        <button type="button" class="btn fullWidth" name="button" @click="check">检查</button>
+      </div>
+      <div class="time" v-if="status=='showing'">
+        {{time}}
+      </div>
+      <div class="move-box" v-for="(li,index) in anwsers" :data-index="index" ref="move-box">
+        <div class="mask">
+          <div class="success"><i class="fa fa-check-circle"></i></div>
+          <div class="error"><i class="fa fa-times-circle"></i></div>
+        </div>
+        {{li}}
+      </div>
+    </div>
+
+  </div>
+
+  <script type="text/javascript" src="static/vue/vue.min.js"></script>
+  <script type="text/javascript" src="static/layer_mobile/layer.js"></script>
+  <script src="static/jquery.min.js"></script>
+  <script type="text/javascript" src="static/hammer.min.js"></script>
+  <script type="text/javascript">
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault()
+    }, false);
+
+    //获取相关CSS属性
+    var getCss = function(o, key) {
+      return o.currentStyle ? o.currentStyle[key] : document.defaultView.getComputedStyle(o, false)[key];
+    };
+
+
+    //找出相遇点中最近的元素
+    function findObj(obj) {
+      var arr1 = [];
+      var arr2 = [];
+      var res = null;
+      var minnum = 9999999;
+      var minLi = null;
+      var oLi = $('.source div');
+
+      for (var i = 0; i < oLi.length; i++) {
+        res = isButt(obj, oLi[i]);
+        if (oLi[i] != obj && res) {
+          return oLi[i];
+        }
+      }
+      return false;
+    }
+
+    //碰撞检测
+    function isButt(aObj, bObj) {
+      var a1 = aObj.offsetLeft;
+      var b1 = aObj.offsetTop;
+      var c1 = aObj.offsetLeft + aObj.offsetWidth;
+      var d1 = aObj.offsetTop + aObj.offsetHeight;
+
+      var a2 = bObj.offsetLeft;
+      var b2 = bObj.offsetTop;
+      var c2 = bObj.offsetLeft + bObj.offsetWidth;
+      var d2 = bObj.offsetTop + bObj.offsetHeight;
+      if (a2 > c1 || b2 > d1 || a1 > c2 || b1 > d2) {
+        return false;
+
+      } else {
+
+        return true;
+      }
+
+    }
+  </script>
+  <script type="text/javascript">
+    Array.prototype.shuffle = function() {
+      let m = this.length,
+        i;
+      while (m) {
+        i = (Math.random() * m--) >>> 0;
+        [this[m], this[i]] = [this[i], this[m]]
+      }
+      return this;
+    }
+    var app = new Vue({
+      el: "#app",
+      data: {
+        "time": 5,
+        "status": "begin",
+        "anwsers": ['1', '2', '3', '4', '5', '6', '7', '8'],
+        // 记录选择结果的索引值
+        "result": []
+      },
+      computed: {
+        // 判断是否图片都有了答案
+        completed: function() {
+          for (var i = 0; i < this.result.length; i++) {
+            if (this.result[i] === false) {
+              return false;
+            }
+          }
+          return true;
+        }
+      },
+      watch: {
+        status: function(val) {
+          if (val == "showing") {
+            this.startshow();
+          }
+          if (val == "starting") {
+            this.dragInt();
+            this.moveInt();
+          }
+        }
+      },
+      methods: {
+        startshow: function() {
+          var _this = this;
+          this.$nextTick(function() {
+            // this.getInfo();
+            _this.dragInt();
+            _this.moveInt();
+            _this.daojishi();
+          });
+        },
+        daojishi: function() {
+          if (this.time <= 0) {
+            this.status = 'starting';
+            return;
+          }
+          var _this = this;
+          setTimeout(function() {
+            _this.time--;
+            _this.daojishi();
+          }, 1000);
+        },
+        getInfo: function() {
+          var _this = this;
+          _this.msg("获取信息中..");
+          $.get("{:U('getInfo')}", function(res) {
+            if (res.status) {
+              // _this.status="showing";
+            } else {
+              _this.msg(res.msg);
+            }
+          });
+        },
+        moveInt: function() {
+          var _this = this;
+          var indexA = [];
+          var sourceHeight = 0;
+          for (var i = 0; i < this.anwsers.length; i++) {
+            indexA.push(i);
+          }
+          if (this.status == "starting") {
+            // 打乱的数组
+            indexA = indexA.shuffle();
+            sourceHeight = this.$refs.source.offsetHeight;
+          }
+          for (var i = 0; i < this.anwsers.length; i++) {
+            var index = indexA[i];
+            var source = _this.$refs['source-box'][index];
+            var left = source.offsetLeft;
+            var top = source.offsetTop;
+            _this.$refs['move-box'][i].style.left = left + "px";
+            _this.$refs['move-box'][i].style.top = top + sourceHeight + "px";
+          }
+        },
+        dragInt: function() {
+          var myElement = this.$refs['move-box'];
+          // console.log(myElement);
+          for (var i = 0; i < myElement.length; i++) {
+            this.drag(myElement[i]);
+            //初始化result的数组
+            this.$set(this.result, i, false);
+            // this.result[i] = false;
+          }
+        },
+        check: function() {
+          for (var i = 0; i < this.result.length; i++) {
+            var className = this.$refs['move-box'][i].className;
+            if (parseInt(this.result[i]) !== i) {
+              this.$refs['move-box'][i].className = "move-box error";
+            } else {
+              this.$refs['move-box'][i].className = "move-box success";
+            }
+          }
+        },
+        /**
+         * 初始化拖拽事件
+         * @wyy.xb@qq.com wangyinye
+         * @param         {[type]}  element [description]
+         * @return        {[type]}          [description]
+         */
+        drag: function(element) {
+          element.style.top = getCss(element, "top");
+          element.style.left = getCss(element, "left");
+
+          // var intX,intY;
+
+          var hammer = new Hammer(element); //hammer实例
+          var x = 0;
+          var y = 0;
+          var nearDiv = false;
+
+          var _this = this;
+          var haschoose = false;
+
+          hammer.on('panstart', function(event) {
+
+            nearDiv = findObj(element);
+
+
+            if (nearDiv && _this.result[nearDiv.getAttribute('data-index')] !== false) {
+              var choose = _this.result[nearDiv.getAttribute('data-index')];
+
+              $('.move-box').attr('class', "move-box");
+              // _this.$refs['move-box'].className="move-box";
+
+              // 判断是否是已选的如果是已选 先清楚选择项
+              haschoose = [nearDiv.getAttribute('data-index'), choose];
+              _this.$set(_this.result, nearDiv.getAttribute('data-index'), false);
+              // _this.result[nearDiv.getAttribute('data-index')] = false;
+            }
+
+            $(element).addClass("move");
+
+            x = parseInt(element.style.left);
+            y = parseInt(element.style.top);
+          });
+          hammer.on('panmove', function(event) {
+            // 禁止多点触控.
+            if(document.getElementsByClassName("move").length>1){
+              return;
+            }
+            nearDiv = findObj(element);
+            $('.source div').attr("class", "");
+            if (nearDiv) {
+              $(nearDiv).attr("class", "hig");
+            }
+            element.style.top = y + event.deltaY + "px";
+            element.style.left = x + event.deltaX + "px";
+          });
+          hammer.on('panend', function(event) {
+            $(element).removeClass("move");
+            if (nearDiv !== false) {
+              //最近的div的索引
+              var index = nearDiv.getAttribute('data-index');
+              // 判断是否该button已经有数据
+              if (_this.result[index] !== false) {
+                // 互换位置
+
+                var Celement = _this.$refs["move-box"][_this.result[index]];
+                Celement.style.top = y + "px";
+                Celement.style.left = x + "px";
+
+                // console.log(haschoose);
+                if (haschoose !== false) {
+                  // 将被替换的那个图片的result设置为自身的result
+                  _this.$set(_this.result, haschoose[0], _this.result[index]);
+                }
+
+              }
+              _this.$set(_this.result, index, element.getAttribute('data-index'));
+
+
+              element.style.top = nearDiv.offsetTop + "px";
+              element.style.left = nearDiv.offsetLeft + "px";
+
+            }
+          });
+
+        },
+        msg: function(msg) {
+          //提示
+          layer.open({
+            content: msg,
+            skin: 'msg',
+            time: 2
+          });
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
